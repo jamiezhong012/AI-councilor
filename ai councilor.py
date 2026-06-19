@@ -18,6 +18,7 @@ FILE_AI = "ai councilor.html"
 FILE_ABOUT = "about.html"
 FILE_ANSWER = "answer.html"
 FILE_MATH = "math.html"
+FILE_NOTES = "notes.html"
 
 # --- Client / App Init --------------------------------------------------------
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -119,6 +120,18 @@ def math_page():
 def math_html():
     """Legacy path: serve the math page when /math.html is requested."""
     return read_file(FILE_MATH)
+
+
+@app.route('/notes')
+def notes_page():
+    """Serve the notes page."""
+    return read_file(FILE_NOTES)
+
+
+@app.route('/notes.html')
+def notes_html():
+    """Legacy path: serve the notes page when /notes.html is requested."""
+    return read_file(FILE_NOTES)
 
 
 # --- Entrypoint ---------------------------------------------------------------

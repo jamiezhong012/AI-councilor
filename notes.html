@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Notes — AI Councilor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root{ --bg-a:#0f1724; --bg-b:#071029; --card:#071226cc; --accent:#7ee7ff; --accent-2:#ff9a76; --muted:#9fb0c9 }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:linear-gradient(160deg,var(--bg-a),var(--bg-b)); color:var(--muted); -webkit-font-smoothing:antialiased}
+    .notes-app{max-width:1000px;margin:36px auto;padding:24px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 30px 80px rgba(2,6,23,0.7);border:1px solid rgba(255,255,255,0.03)}
+    .header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+    .brand{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 8px 24px rgba(124,218,255,0.08);color:#022}
+    .brand svg{filter:drop-shadow(0 8px 20px rgba(0,0,0,0.45));}
+    h1{margin:0;color:#fff;font-size:20px}
+    .muted{color:var(--muted)}
+
+    .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+    .toolbar input[type="text"]{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
+
+    .editor{display:flex;gap:18px}
+    .editor .form{flex:1;display:flex;flex-direction:column;gap:10px}
+    input#title{padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff;font-weight:700}
+    textarea{min-height:180px;resize:vertical;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.25);color:#e6f7ff}
+
+    .notes-list{width:360px;border-left:1px solid rgba(255,255,255,0.03);padding-left:16px;overflow:auto;max-height:60vh}
+    .note-item{padding:12px;border-radius:10px;margin-bottom:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .note-item:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,0,0,0.6)}
+    .note-item.active{outline:2px solid rgba(126,231,255,0.2)}
+    .note-item strong{display:block;color:#fff}
+    .note-item .small{color:var(--muted);margin-top:6px}
+    .note-item .snippet{color:#cfeeff;margin-top:8px;font-size:0.95rem;max-height:3.2em;overflow:hidden}
+
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{padding:9px 12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#022;font-weight:800;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    button.danger{background:linear-gradient(90deg,#ff8a8a,#ffb3b3);color:#111}
+
+    @media (max-width:880px){.editor{flex-direction:column}.notes-list{width:100%;border-left:none;padding-left:0}}
+  </style>
+</head>
+<body>
+  <div class="notes-app">
+    <div class="header">
+      <div class="brand" aria-hidden="true">
+        <!-- simple cool SVG logo -->
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5" fill="white" opacity="0.06"/>
+          <path d="M6 12c1.8-2 3.2-3 6-3s4.2 1 6 3" stroke="white" stroke-opacity="0.95" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="8" r="1.2" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Notes</h1>
+        <div class="muted">Quick notes kept locally — export to back up or import to restore.</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Search notes...">
+      <div class="controls">
+        <button id="newBtn" class="ghost">New</button>
+        <button id="exportBtn" class="ghost">Export</button>
+        <button id="importBtn" class="ghost">Import</button>
+        <button id="clearAllBtn" class="danger">Clear All</button>
+      </div>
+    </div>
+
+    <div class="editor">
+      <div class="form">
+        <input id="title" type="text" placeholder="Note title">
+        <textarea id="content" placeholder="Start writing your note..."></textarea>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="saveBtn">Save</button>
+          <button id="deleteBtn" class="danger">Delete</button>
+          <span id="status" class="small muted"></span>
+        </div>
+      </div>
+
+      <div class="notes-list" id="notesList" aria-live="polite">
+        <!-- list populated by JS -->
+      </div>
+    </div>
+
+    <input id="importFile" type="file" accept="application/json" style="display:none">
+  </div>
+
+  <script>
+    // Small notes app using localStorage
+    const KEY = 'ai_councilor_notes_v1';
+    let notes = [];
+    let activeId = null;
+
+    const els = {
+      title: document.getElementById('title'),
+      content: document.getElementById('content'),
+      saveBtn: document.getElementById('saveBtn'),
+      deleteBtn: document.getElementById('deleteBtn'),
+      newBtn: document.getElementById('newBtn'),
+      notesList: document.getElementById('notesList'),
+      search: document.getElementById('search'),
+      exportBtn: document.getElementById('exportBtn'),
+      importBtn: document.getElementById('importBtn'),
+      clearAllBtn: document.getElementById('clearAllBtn'),
+      status: document.getElementById('status'),
+      importFile: document.getElementById('importFile')
+    };
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        notes = raw ? JSON.parse(raw) : [];
+      } catch(e) { notes = []; }
+      renderList();
+    }
+
+    function saveStorage() {
+      localStorage.setItem(KEY, JSON.stringify(notes));
+    }
+
+    function makeId() { return 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+    function createNote(title, content) {
+      return { id: makeId(), title: title||'Untitled', content: content||'', updated: Date.now() };
+    }
+
+  function renderList(filter) {
+      const q = (filter || els.search.value || '').toLowerCase();
+      els.notesList.innerHTML = '';
+      const sorted = [...notes].sort((a,b)=> b.updated - a.updated);
+      sorted.forEach(n => {
+        if(q) {
+          const hay = (n.title + ' ' + n.content).toLowerCase();
+          if(!hay.includes(q)) return;
+        }
+        const div = document.createElement('div');
+        div.className = 'note-item' + (n.id===activeId? ' active':'');
+        div.tabIndex = 0;
+  div.innerHTML = `<strong>${escapeHtml(n.title)}</strong><div class="small">${new Date(n.updated).toLocaleString()}</div><div class="snippet">${escapeHtml((n.content||'').slice(0,180))}</div>`;
+        div.addEventListener('click', ()=> openNote(n.id));
+        div.addEventListener('keypress', (e)=> { if(e.key==='Enter') openNote(n.id); });
+        els.notesList.appendChild(div);
+      });
+      if(!els.notesList.firstChild) {
+        els.notesList.innerHTML = '<div class="muted">No notes yet.</div>';
+      }
+    }
+
+    function openNote(id) {
+      const n = notes.find(x=>x.id===id);
+      if(!n) return;
+      activeId = n.id;
+      els.title.value = n.title;
+      els.content.value = n.content;
+      renderList();
+      setStatus('Loaded');
+    }
+
+    function newNote() {
+      activeId = null;
+      els.title.value = '';
+      els.content.value = '';
+      els.title.focus();
+      renderList();
+    }
+
+    function saveNote() {
+      const t = els.title.value.trim();
+      const c = els.content.value;
+      if(activeId) {
+        const idx = notes.findIndex(x=>x.id===activeId);
+        if(idx!==-1) { notes[idx].title = t || 'Untitled'; notes[idx].content = c; notes[idx].updated = Date.now(); }
+      } else {
+        const n = createNote(t, c);
+        notes.push(n);
+        activeId = n.id;
+      }
+      saveStorage();
+      renderList();
+      setStatus('Saved');
+    }
+
+    // Autosave while typing (debounced)
+    let autosaveTimer = null;
+    function scheduleAutosave() {
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(()=>{
+        // only save if something is present
+        if(els.title.value.trim()||els.content.value.trim()) saveNote();
+      }, 900);
+    }
+
+    function deleteNote() {
+      if(!activeId) { setStatus('No note selected'); return; }
+      notes = notes.filter(x=>x.id!==activeId);
+      activeId = null;
+      saveStorage();
+      newNote();
+      renderList();
+      setStatus('Deleted');
+    }
+
+    function clearAll() {
+      if(!confirm('Clear all notes? This cannot be undone.')) return;
+      notes = [];
+      saveStorage();
+      newNote();
+      renderList();
+      setStatus('Cleared');
+    }
+
+    function exportNotes() {
+      const blob = new Blob([JSON.stringify(notes, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'ai_councilor_notes.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      setStatus('Exported');
+    }
+
+    function importNotesFromFile(file) {
+      const reader = new FileReader();
+      reader.onload = ()=> {
+        try {
+          const imported = JSON.parse(reader.result);
+          if(!Array.isArray(imported)) throw new Error('Invalid format');
+          // merge: keep existing, append imported with new ids if needed
+          const transformed = imported.map(n=> ({ id: n.id || makeId(), title: n.title||'Untitled', content: n.content||'', updated: n.updated||Date.now() }));
+          notes = notes.concat(transformed);
+          saveStorage();
+          renderList();
+          setStatus('Imported ' + transformed.length + ' notes');
+        } catch(e) { setStatus('Import failed'); }
+      };
+      reader.readAsText(file);
+    }
+
+    function setStatus(s) {
+      els.status.textContent = s;
+      setTimeout(()=>{ if(els.status.textContent===s) els.status.textContent = '' }, 2500);
+    }
+
+    function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // events
+    els.saveBtn.addEventListener('click', saveNote);
+    els.deleteBtn.addEventListener('click', deleteNote);
+    els.newBtn.addEventListener('click', newNote);
+    els.clearAllBtn.addEventListener('click', clearAll);
+    els.exportBtn.addEventListener('click', exportNotes);
+    els.importBtn.addEventListener('click', ()=> els.importFile.click());
+    els.importFile.addEventListener('change', (e)=> { if(e.target.files && e.target.files[0]) importNotesFromFile(e.target.files[0]); e.target.value = ''; });
+
+  els.search.addEventListener('input', ()=> renderList());
+  els.title.addEventListener('input', scheduleAutosave);
+  els.content.addEventListener('input', scheduleAutosave);
+
+    // ctrl/cmd+S to save
+    window.addEventListener('keydown', (e)=>{
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='s') { e.preventDefault(); saveNote(); }
+    });
+
+    // initial
+    load();
+  </script>
+</body>
+</html>
