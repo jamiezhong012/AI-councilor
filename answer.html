@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Answer — AI Counselor</title>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+	<style>
+		:root{ --bg:#071022; --card:#0f1720; --accent:#ffd66b; --muted:#9fb0c9 }
+		html,body{min-height:100vh;margin:0;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#07121a);color:#e6f0ff;display:flex;align-items:flex-start;justify-content:center;padding:28px}
+		.card{width:100%;max-width:880px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.25));border-radius:14px;padding:20px;box-shadow:0 14px 50px rgba(2,6,23,0.7);border:1px solid rgba(255,215,0,0.05)}
+		.hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+		.title{font-size:18px;font-weight:700;color:#fff;margin:0}
+		.sub{font-size:13px;color:var(--muted);margin:0}
+		.actions{margin-left:auto;display:flex;gap:8px}
+		button.btn{background:linear-gradient(90deg,var(--accent),#d4af37);border:0;padding:8px 12px;border-radius:10px;color:#071021;font-weight:800;cursor:pointer}
+		button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px;border-radius:10px;cursor:pointer}
+		.section{background:rgba(255,255,255,0.02);padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);margin-bottom:12px}
+		.label{font-size:13px;color:var(--muted);margin-bottom:8px}
+		.question, .answer{white-space:pre-wrap;line-height:1.55;font-size:15px;color:#eaf3ff}
+		.meta{display:flex;gap:8px;align-items:center;margin-top:10px}
+		.small{font-size:13px;color:var(--muted)}
+
+		/* nicer voice selector */
+		.selectWrap{position:relative;display:inline-block}
+		#voiceSelect{appearance:none;-webkit-appearance:none;padding:8px 34px 8px 12px;border-radius:10px;background:linear-gradient(90deg,rgba(255,214,107,0.10),rgba(212,175,55,0.04));border:1px solid rgba(255,255,255,0.04);color:#fff;min-width:260px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,0.45);cursor:pointer}
+		.selectArrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:14px}
+		@media (max-width:640px){.card{padding:14px}.title{font-size:16px}}
+	</style>
+</head>
+<body>
+	<main class="card" role="main">
+		<header class="hdr">
+			<div>
+				<h1 class="title">Assistant answer</h1>
+				<p class="sub">Clear, actionable guidance from your AI counselor</p>
+			</div>
+			<div class="actions">
+				<button class="ghost" onclick="(history.length>1?history.back():location.href='/')">Back</button>
+				<button class="btn" onclick="location.href='/'">Home</button>
+			</div>
+		</header>
+
+		<section class="section">
+			<div class="label">You asked</div>
+			<div id="question" class="question">QUESTION_HERE</div>
+			<div class="meta">
+				<div class="small">Tip: press Back to return to the app.</div>
+			</div>
+		</section>
+
+		<section class="section">
+			<div class="label">My response</div>
+			<div id="answer" class="answer">ANSWER_HERE</div>
+			<div class="meta">
+				<div class="small">Tip: use Start/Stop to listen to this response.</div>
+			</div>
+
+			<!-- TTS controls -->
+			<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+				<label class="small" style="margin:0">Voice</label>
+				<span class="selectWrap"><select id="voiceSelect" class="small"><option disabled selected>Loading voices…</option></select><span class="selectArrow">▾</span></span>
+				<span id="voiceStatus" class="small" style="margin-left:8px;color:var(--muted)"></span>
+				<label class="small" style="margin:0">Volume</label>
+				<input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" style="width:120px" />
+				<label class="small" style="margin:0">Speed</label>
+				<input id="speedSlider" type="range" min="0.5" max="2" step="0.05" value="1" style="width:120px" />
+				<button id="startBtn" class="ghost">Start</button>
+				<button id="stopBtn" class="ghost">Stop</button>
+			</div>
+		</section>
+
+		<footer style="text-align:right"><span class="small">Powered by your AI counselor • Built for learning</span></footer>
+	</main>
+
+	
+
+	<script>
+	// Speech synthesis controls
+	(function(){
+	const startBtn = document.getElementById('startBtn');
+		const stopBtn = document.getElementById('stopBtn');
+		const voiceSelect = document.getElementById('voiceSelect');
+	const volumeSlider = document.getElementById('volumeSlider');
+		let synth = window.speechSynthesis;
+		let utter;
+
+		const voiceStatus = document.getElementById('voiceStatus');
+		let voiceAttempts = 0;
+		function populateVoices(){
+			const voices = synth.getVoices();
+			voiceSelect.innerHTML = '';
+			if(voices.length === 0){
+				voiceAttempts++;
+				if(voiceAttempts < 6){
+					// try again shortly — some browsers populate asynchronously
+					voiceStatus.textContent = 'Waiting for voices…';
+					setTimeout(populateVoices, 300);
+					return;
+				}
+				// no voices found — allow fallback: enable Start and use default system voice
+				voiceSelect.innerHTML = '<option disabled selected>No voices available</option>';
+				voiceSelect.disabled = true;
+				voiceStatus.textContent = 'No voices available; Start will use the browser/system default voice.';
+				startBtn.disabled = false; // allow user to speak using the default voice
+				return;
+			}
+			voices.forEach((v,i)=>{
+				const opt = document.createElement('option');
+				opt.value = i; opt.textContent = `${v.name} (${v.lang})${v.default? ' — default':''}`;
+				voiceSelect.appendChild(opt);
+			});
+			voiceStatus.textContent = `${voices.length} voices found`;
+			voiceSelect.disabled = false;
+			startBtn.disabled = false;
+		}
+		if(synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
+		populateVoices();
+
+
+		const speedSlider = document.getElementById('speedSlider');
+		startBtn.addEventListener('click', ()=>{
+			const text = document.getElementById('answer').innerText.trim();
+			if(!text) return alert('No answer to speak');
+			// if paused, resume
+			if(synth.paused){ try{ synth.resume(); }catch(e){}; return; }
+			// if already speaking, do nothing
+			if(synth.speaking) return;
+			// otherwise start fresh
+			utter = new SpeechSynthesisUtterance(text);
+			const voices = synth.getVoices();
+			const idx = parseInt(voiceSelect.value||0,10);
+			if(voices[idx]) utter.voice = voices[idx];
+			utter.rate = parseFloat(speedSlider.value || '1'); utter.pitch = 1; utter.volume = parseFloat(volumeSlider.value || '1');
+			synth.speak(utter);
+		});
+
+	stopBtn.addEventListener('click', ()=>{ if(synth.speaking || synth.paused) synth.cancel(); utter = null; });
+
+		// allow live volume and speed changes while speaking (may not be supported on all browsers)
+		volumeSlider.addEventListener('input', ()=>{
+			const v = parseFloat(volumeSlider.value);
+			if(utter && synth.speaking){ try{ utter.volume = v; }catch(e){} }
+		});
+		speedSlider.addEventListener('input', ()=>{
+			const r = parseFloat(speedSlider.value);
+			if(utter && synth.speaking){ try{ utter.rate = r; }catch(e){} }
+		});
+	})();
+	</script>
+</body>
+</html>

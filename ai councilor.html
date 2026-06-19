@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>AI Counselor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+    :root{ --bg1:#001124; --bg2:#00243a; --card:#070812dd; --accent:#4fc3ff; --muted:#cbd5e1 }
+        *{box-sizing:border-box}
+        html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--muted);-webkit-font-smoothing:antialiased}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px;position:relative}
+    .card{width:100%;max-width:980px;border-radius:16px;padding:28px;position:relative}
+    .card::before{content:"";position:absolute;inset:0;border-radius:16px;background:linear-gradient(180deg,#021830,#00121a);box-shadow:0 30px 80px rgba(0,0,0,0.85);border:1px solid rgba(255,255,255,0.03);z-index:0}
+    .card > *{position:relative;z-index:2}
+        .top{display:flex;gap:18px;align-items:center}
+    .avatar{width:96px;height:96px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:visible}
+    .avatar svg{width:110px;height:110px;display:block;overflow:visible}
+    .avatar svg{filter:drop-shadow(0 10px 30px rgba(255,107,107,0.18));transition:transform .6s}
+    .avatar .glow{mix-blend-mode:screen;opacity:.95}
+    @keyframes float-logo{0%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-6px) rotate(3deg)}100%{transform:translateY(0) rotate(0deg)}}
+    .avatar svg{animation:float-logo 6s ease-in-out infinite}
+    .avatar .ai-text{fill:#fff;font-weight:900;font-family:Inter,system-ui,Arial,sans-serif;font-size:34px}
+        h1{margin:0;color:#fff;font-size:24px}
+        p.lead{margin:6px 0 0;color:#dbeafe}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:22px;margin-top:20px}
+    .about-btn{background:linear-gradient(90deg,var(--accent),#ff9a76);color:#fff;border:none;padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .about-btn:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,0.4)}
+    .panel{background:rgba(255,255,255,0.02);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+
+    /* layered streaks: gold + teal for a richer background */
+    @keyframes shimmer { from{stroke-dashoffset:0} to{stroke-dashoffset:1200} }
+    @keyframes drift-slow{0%{transform:translate3d(-6%,0,0)}50%{transform:translate3d(6%,2%,0)}100%{transform:translate3d(-6%,0,0)}}
+    @keyframes drift-fast{0%{transform:translate3d(-10%,0,0)}50%{transform:translate3d(10%,1%,0)}100%{transform:translate3d(-10%,0,0)}}
+    .streaks{position:fixed;inset:0;pointer-events:none;z-index:0}
+    .streaks .layer{position:absolute;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+    .streaks .layer.gold{mix-blend-mode:screen;opacity:0.38;animation:drift-slow 12s ease-in-out infinite}
+    .streaks .layer.teal{mix-blend-mode:screen;opacity:0.32;animation:drift-fast 9s linear infinite}
+    .streaks svg{width:100%;height:100%;display:block}
+    .streaks path{stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:480;animation:shimmer 4s linear infinite}
+    .streaks .gold path{stroke:url(#goldGrad)}
+    .streaks .teal path{stroke:url(#tealGrad)}
+        .ask form{display:flex;gap:8px;align-items:stretch}
+    .ask textarea, .ask input[type="text"]{flex:1;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.10);background:transparent;color:#ffffff;font-weight:600;font-size:16px;min-height:48px;box-sizing:border-box;resize:none;overflow:hidden}
+    .ask textarea{min-height:110px;padding-top:12px;padding-bottom:12px}
+    .ask textarea::placeholder, .ask input[type="text"]::placeholder{color:rgba(255,255,255,0.72);opacity:1}
+    .ask textarea:-ms-input-placeholder, .ask input[type="text"]:-ms-input-placeholder{color:rgba(255,255,255,0.72)}
+    .ask textarea::-ms-input-placeholder, .ask input[type="text"]::-ms-input-placeholder{color:rgba(255,255,255,0.72)}
+        .ask button{padding:12px 16px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#ff9a76);color:#fff;font-weight:700;cursor:pointer}
+        .links a{display:block;padding:10px;border-radius:10px;text-decoration:none;color:var(--muted);background:rgba(255,255,255,0.02);margin-bottom:8px}
+    footer{margin-top:18px;color:#9fb0e6;font-size:13px}
+        @media (max-width:880px){.grid{grid-template-columns:1fr}.avatar{width:72px;height:72px}}
+    </style>
+</head>
+<body>
+        <div class="wrap">
+        
+        <main class="card" role="main">
+                                                                                                <div class="streaks" aria-hidden="true">
+                                                                                                    <svg class="layer gold" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                                                                                                        <defs>
+                                                                                                            <linearGradient id="goldGrad" x1="0" x2="1" y1="0" y2="0">
+                                                                                                                <stop offset="0%" stop-color="#fff7e6" stop-opacity="1"/>
+                                                                                                                <stop offset="50%" stop-color="#ffd66b" stop-opacity="1"/>
+                                                                                                                <stop offset="100%" stop-color="#d4af37" stop-opacity="1"/>
+                                                                                                            </linearGradient>
+                                                                                                        </defs>
+                                                                                                        <g fill="none" stroke="url(#goldGrad)" stroke-linecap="round" stroke-linejoin="round">
+                                                                                                              <path d="M-240 40 C160 80 420 20 820 60" stroke-width="10" opacity="1" />
+                                                                                                              <path d="M-120 160 C300 200 540 120 980 170" stroke-width="8" opacity="0.88" />
+                                                                                                              <path d="M-80 260 C320 300 640 220 1120 270" stroke-width="6" opacity="0.78" />
+                                                                                                        </g>
+                                                                                                    </svg>
+
+                                                                                                    <svg class="layer teal" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                                                                                                        <defs>
+                                                                                                            <linearGradient id="tealGrad" x1="0" x2="1" y1="0" y2="0">
+                                                                                                                <stop offset="0%" stop-color="#e6ffff" stop-opacity="1"/>
+                                                                                                                <stop offset="50%" stop-color="#9be7ff" stop-opacity="1"/>
+                                                                                                                <stop offset="100%" stop-color="#1e6fb3" stop-opacity="1"/>
+                                                                                                            </linearGradient>
+                                                                                                        </defs>
+                                                                                                        <g fill="none" stroke="url(#tealGrad)" stroke-linecap="round" stroke-linejoin="round">
+                                                                                                              <path d="M-260 100 C140 140 420 80 820 120" stroke-width="7" opacity="0.95" />
+                                                                                                              <path d="M-200 220 C200 260 500 200 920 240" stroke-width="6" opacity="0.85" />
+                                                                                                              <path d="M-160 340 C240 380 560 320 1040 360" stroke-width="5" opacity="0.72" />
+                                                                                                        </g>
+                                                                                                    </svg>
+                                                                                                </div>
+            <div class="top">
+                                <div class="avatar" aria-hidden="true">
+                                        <!-- Animated SVG logo: gradient orb + AI letters -->
+                                        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                                                        <defs>
+                                                                                                <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                                                                                                        <stop offset="0%" stop-color="#ff6b6b"/>
+                                                                                                        <stop offset="100%" stop-color="#ff9a76"/>
+                                                                                                </linearGradient>
+                                                                                                <radialGradient id="g2" cx="30%" cy="30%" r="70%">
+                                                                                                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+                                                                                                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                                                                                                </radialGradient>
+                                                                                                <!-- subtle drop shadow for the ball -->
+                                                                                                <filter id="ballShadow" x="-50%" y="-50%" width="200%" height="200%">
+                                                                                                    <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.25" />
+                                                                                                </filter>
+                                                                                                <!-- ball shading gradient -->
+                                                                                                <radialGradient id="ballGrad" cx="35%" cy="35%" r="70%">
+                                                                                                    <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+                                                                                                    <stop offset="55%" stop-color="#f2f2f2" stop-opacity="1"/>
+                                                                                                    <stop offset="100%" stop-color="#e6e6e6" stop-opacity="1"/>
+                                                                                                </radialGradient>
+                                                                                        </defs>
+                                            <g>
+                                                <circle cx="60" cy="60" r="46" fill="url(#g1)" />
+                                                <circle class="glow" cx="60" cy="50" r="30" fill="url(#g2)" />
+                                                <text class="ai-text" x="60" y="64" text-anchor="middle" dominant-baseline="middle">AC</text>
+                                                                                                <!-- improved orbiting soccer ball -->
+                                                                                                    <g>
+                                                                                                        <!-- orbit group: rotates around logo center -->
+                                                                                                        <g>
+                                                                                                            <!-- ball group positioned on orbit path (hand-drawn SVG so color is controlled) -->
+                                                                                                                                                                <g transform="translate(76,46)" filter="url(#ballShadow)">
+                                                                                                                                                                    <!-- emoji-based soccer ball for consistent colorful appearance -->
+                                                                                                                                                                    <text x="0" y="0" font-size="36" font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif" text-anchor="middle" dominant-baseline="central">⚽</text>
+                                                                                                                                                                    <!-- gentle self-rotation for the emoji -->
+                                                                                                                                                                    <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2.6s" repeatCount="indefinite" />
+                                                                                                                                                                </g>
+                                                                                                            <!-- orbit animation around logo center (60,60) -->
+                                                                                                            <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="6s" repeatCount="indefinite" />
+                                                                                                        </g>
+                                                                                                    </g>
+                                            </g>
+                                        </svg>
+                                </div>
+                <div style="flex:1;min-width:0">
+                    <h1>AI Counselor</h1>
+                    <p class="lead">Friendly, helpful college advising — ask a question and I'll reply with practical steps.</p>
+                </div>
+                <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                    <button class="about-btn" onclick="location.href='/math'" aria-label="Open Math tools">Math Tools</button>
+                    <button class="about-btn" onclick="location.href='/about'" aria-label="Open About page">About me</button>
+                </div>
+            </div>
+
+            <div class="grid">
+                <section class="panel">
+                    <h2 style="margin:0 0 12px;color:#fff">Meet your counselor</h2>
+                    <img src="https://www.thedailyupside.com/wp-content/uploads/2025/02/cio_humanoid-robot_02-10-25_iStock-iLexx.png" alt="AI" style="width:100%;border-radius:8px;display:block;margin-bottom:12px">
+                    <p style="margin:0 0 12px;color:#cfe7ff">I can help with study plans, college questions, and general advice. Try asking something short and specific.</p>
+                </section>
+
+                <aside class="panel">
+                    <div class="ask">
+                        <h3 style="margin-top:0;color:#fff">Ask a question</h3>
+                        <form action="/ask" method="get">
+                            <textarea name="question" id="questionBox" placeholder="What's on your mind?"></textarea>
+                            <button type="submit">Ask</button>
+                        </form>
+                    </div>
+                </aside>
+            </div>
+
+            <footer>Tip: Use the Ask box or click About to learn more.</footer>
+        </main>
+    </div>
+        <script>
+            // Auto-resize the question textarea to fit content
+            (function(){
+                const ta = document.getElementById('questionBox');
+                if(!ta) return;
+                const resize = ()=>{ ta.style.height='auto'; ta.style.height = (ta.scrollHeight)+'px'; };
+                ta.addEventListener('input', resize);
+                window.addEventListener('load', resize);
+                // grow initially if placeholder replaced by server-side text
+                setTimeout(resize,200);
+            })();
+        </script>
+</body>
+</html>

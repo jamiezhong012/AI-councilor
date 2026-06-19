@@ -1,0 +1,12 @@
+/* Minimal stylesheet to avoid 404 and provide base styles */
+:root{ --accent: #ff4757; --bg: #fff7ed; --text:#05204a }
+html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter, system-ui, Arial, sans-serif}
+h1,h2,h3{margin:.4rem 0}
+a{color:var(--accent);text-decoration:none}
+button{cursor:pointer}
+img{max-width:100%;height:auto}
+.container{max-width:980px;margin:24px auto;padding:16px}
+
+/* small utility */
+.back{background:transparent;border:0;color:var(--text);font-weight:700}
+.btn{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:8px 12px;border-radius:8px}

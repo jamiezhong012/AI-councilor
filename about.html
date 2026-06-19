@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>About — AI Counselor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+  :root{ --bg1:#060606; --bg2:#121212; --card:#0f0f0fdd; --accent:#d4af37; --muted:#e9dcc0 }
+    *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--muted)}
+  .wrap{width:100%;max-width:920px;padding:28px;position:relative}
+  /* decorative gold streaks behind the card */
+  /* make streaks cover the entire viewport so they run side-to-side */
+  .gold-streaks{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0.18;z-index:-3;width:100vw;height:100vh}
+  .gold-streaks svg{width:100vw;height:100vh;display:block}
+  /* animation: gentle drift and shimmer */
+  @keyframes drift {
+    0%{transform:translateX(-6%)}
+    50%{transform:translateX(6%)}
+    100%{transform:translateX(-6%)}
+  }
+  @keyframes shimmer {
+    from{stroke-dashoffset:0}
+    to{stroke-dashoffset:1200}
+  }
+  .gold-streaks{animation:drift 10s ease-in-out infinite}
+  .gold-streaks path{stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:400;animation:shimmer 3.6s linear infinite}
+  /* decorative streaks (no per-group delays) */
+  .card{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.25));border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 0 4px rgba(212,175,55,0.04);border:1px solid #d4af37}
+    .row{display:flex;gap:18px;align-items:center}
+  .avatar{width:92px;height:92px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#b8860b);display:flex;align-items:center;justify-content:center;color:#060606;font-weight:800;font-size:28px;flex-shrink:0}
+    h1{margin:0;font-size:26px}
+  p.lead{margin:8px 0 0;color:var(--muted);line-height:1.45}
+  .meta{margin-top:14px;color:#cbb783;font-size:14px}
+    .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;text-decoration:none;color:#060606;background:linear-gradient(90deg,var(--accent),#ffc857);border:1px solid rgba(255,215,0,0.08);font-weight:700;transition:transform .12s,box-shadow .12s}
+  .btn:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(212,175,55,0.12)}
+  .back{background:transparent;border:0;color:var(--muted);font-weight:700;cursor:pointer;padding:6px 8px;margin-bottom:12px}
+  footer{margin-top:20px;font-size:13px;color:#cbb783}
+    @media (max-width:680px){.row{flex-direction:column;align-items:flex-start}.avatar{width:72px;height:72px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="gold-streaks" aria-hidden="true">
+      <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="goldGrad" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stop-color="#fff7e6" stop-opacity="1"/>
+            <stop offset="50%" stop-color="#ffd66b" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#d4af37" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#goldGrad)" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M-200 50 C200 80 400 20 800 60" stroke-width="8" opacity="0.9" stroke-dasharray="540" />
+          <path d="M-150 120 C250 150 500 80 950 130" stroke-width="6" opacity="0.75" stroke-dasharray="420" />
+          <path d="M-100 200 C300 230 600 180 1100 220" stroke-width="4" opacity="0.6" stroke-dasharray="320" />
+        </g>
+      </svg>
+    </div>
+    <div class="card">
+      <button class="back" onclick="goBack()">← Back</button>
+
+      <div class="row">
+        <div class="avatar">AI</div>
+        <div style="flex:1;min-width:0">
+          <h1>About me</h1>
+          <p class="lead">I'm your personal AI counselor — here to help you learn, plan, and make better choices. I love red, zha jiang mian, and soccer. Below are some of my favorite sites and a few quick links.</p>
+          <div class="meta">Quick facts: favorite food — <strong>zha jiang mian</strong>; favorite sport — <strong>soccer</strong>.</div>
+        </div>
+      </div>
+
+      <nav class="links" aria-label="Favorite links">
+        <a class="btn" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:.9"><path d="M10 8.5v7l6-3.5z"/></svg>
+          YouTube
+        </a>
+
+        <a class="btn" href="https://poki.com/" target="_blank" rel="noopener noreferrer">Poki</a>
+
+        <a class="btn" href="https://www.crazygames.com/" target="_blank" rel="noopener noreferrer">CrazyGames</a>
+
+        <a class="btn" href="https://www.nitrotype.com/" target="_blank" rel="noopener noreferrer">NitroType</a>
+      </nav>
+
+      <footer>Tip: use the Back button or your browser's back arrow to return. Built with ❤️ for learning.</footer>
+    </div>
+  </div>
+
+  <script>
+    function goBack(){
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    }
+  </script>
+</body>
+</html>

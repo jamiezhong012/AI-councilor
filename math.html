@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Math Tools — AI Counselor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+  /* Black & gold theme (match about.html) */
+  :root{ --bg1:#060606; --bg2:#121212; --card:#0f0f0fdd; --accent:#d4af37; --muted:#e9dcc0 }
+    html,body{height:100%;}
+  body{font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;margin:0;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding-top:36px;color:var(--muted);position:relative;overflow:auto;-webkit-overflow-scrolling:touch}
+
+    /* solid dark-blue base layer */
+    body::before{
+      content:"";position:fixed;inset:0;z-index:-3;background:linear-gradient(120deg,#031028 0%, #07203a 45%, #0b2b48 100%);
+    }
+
+    /* drifting color glows (blue) */
+    body::after{
+      content:"";position:fixed;inset:-20%;z-index:-2;pointer-events:none;mix-blend-mode:screen;opacity:0.95;
+      background:
+        radial-gradient(600px 360px at 10% 20%, rgba(30,90,160,0.06), transparent 12%),
+        radial-gradient(420px 280px at 85% 75%, rgba(20,60,120,0.04), transparent 14%),
+        radial-gradient(240px 160px at 50% 45%, rgba(255,255,255,0.02), transparent 18%);
+      transform:translate3d(-6%,0,0);
+      animation: drift 14s ease-in-out infinite;
+    }
+
+    @keyframes drift{0%{transform:translate3d(-6%,0,0)}50%{transform:translate3d(6%,2%,0)}100%{transform:translate3d(-6%,0,0)}}
+
+  /* gold streaks shimmer (match about.html) */
+  @keyframes shimmer { from{stroke-dashoffset:0} to{stroke-dashoffset:1200} }
+  .gold-streaks{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0.18;z-index:-3;width:100vw;height:100vh}
+  .gold-streaks svg{width:100vw;height:100vh;display:block}
+  .gold-streaks{animation:drift 10s ease-in-out infinite}
+  .gold-streaks path{stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:400;animation:shimmer 3.6s linear infinite}
+
+    /* subtle grid texture */
+  .wrap{width:100%;max-width:100%;padding:20px 28px;position:relative;z-index:1}
+    .wrap::before{content:"";position:absolute;inset:0;z-index:-1;background-image:repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0 1px, transparent 1px 40px), repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0 1px, transparent 1px 40px);opacity:0.04;pointer-events:none}
+
+  .card{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.25));border-radius:14px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,0.6), 0 0 0 4px rgba(212,175,55,0.04);border:1px solid var(--accent);backdrop-filter:blur(6px);width:100%;max-width:none}
+  /* header */
+  .header{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .brand-badge{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),#b8860b);box-shadow:0 6px 18px rgba(184,134,11,0.12);flex-shrink:0;border:1px solid rgba(212,175,55,0.08);color:#060606;font-weight:800}
+  .brand-badge svg{width:34px;height:34px}
+  h1{margin:0;font-size:20px;color:#fff;letter-spacing:0.6px}
+  .accent{color:#ffd66b;font-weight:800;margin-left:6px}
+  .row{display:flex;gap:18px;align-items:stretch}
+  .col{flex:1;min-width:0}
+  /* calculator layout */
+  .calc-area{display:flex;flex-direction:column;gap:12px}
+  .controls{display:flex;gap:8px;align-items:center}
+  .keypad{display:grid;grid-template-columns:repeat(5,64px);gap:8px;justify-content:start}
+  .tool{min-width:56px;min-height:44px}
+  .calc-display{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.04));padding:18px;border-radius:12px;color:var(--muted);font-size:22px;margin-bottom:8px;border:1px solid rgba(212,175,55,0.06);font-family:ui-monospace,SFMono,Menlo,Monaco,monospace;letter-spacing:0.6px;flex:1;min-height:84px;display:flex;align-items:center;justify-content:flex-start}
+    .buttons{display:flex;gap:12px;align-items:flex-start;width:100%}
+    .num-pad{display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:8px;flex:1}
+    .func-pad{display:flex;flex-direction:column;gap:8px;width:320px}
+    .fns-grid{display:grid;grid-template-columns:repeat(4,minmax(64px,1fr));gap:8px}
+  .ops-grid{display:flex;flex-direction:row;gap:8px;align-items:center;width:auto}
+    button.tool{padding:12px;border-radius:10px;border:1px solid rgba(212,175,55,0.06);background:linear-gradient(90deg,#0f0f0f,#121212);color:var(--muted);font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.6);transition:transform .18s ease,box-shadow .18s,filter .18s}
+  button.tool:hover{transform:translateY(-4px);box-shadow:0 18px 30px rgba(36,64,82,0.28);filter:brightness(1.06)}
+  button.tool:active{transform:translateY(-1px);}
+  /* accent glow for special buttons */
+  .tool.accent{background:linear-gradient(90deg,#ffd66b,#d4af37);color:#060606;box-shadow:0 10px 30px rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.12)}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));padding:14px;border-radius:12px;margin-bottom:12px;border:1px solid rgba(212,175,55,0.04);display:flex;flex-direction:column}
+  /* math-section: bright YouTube-red accents */
+  .math-section .calc-display{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));border:1px solid rgba(212,175,55,0.06);box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+  .math-section .buttons .tool{background:linear-gradient(180deg,#fff7e6,#ffd66b);color:#060606;font-weight:800;border-radius:10px;box-shadow:0 10px 24px rgba(212,175,55,0.08)}
+  .math-section .buttons .tool:hover{transform:translateY(-3px);filter:brightness(1.02);box-shadow:0 18px 30px rgba(212,175,55,0.12)}
+  .math-section .tool#eq{background:linear-gradient(180deg,#ffd66b,#d4af37);color:#060606;box-shadow:0 12px 30px rgba(212,175,55,0.12)}
+  .math-section .tool#del, .math-section .tool#clear{background:linear-gradient(180deg,#fff7e6,#ffd66b);color:#060606}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#cfe7ff}
+  input[type="text"], input[type="number"]{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(212,175,55,0.06);background:transparent;color:var(--muted)}
+  select{border:1px solid rgba(212,175,55,0.06);background:transparent;color:var(--muted);padding:6px;border-radius:6px}
+    .small{font-size:13px;color:#9fb0e6}
+  .back{background:transparent;border:0;color:var(--muted);font-weight:700;cursor:pointer;padding:6px 8px;margin-bottom:12px}
+
+    /* responsive tweaks */
+    @media (max-width:900px){
+      .row{flex-direction:column}
+      .header{gap:10px}
+      .brand-badge{width:48px;height:48px}
+      h1{font-size:18px}
+      .calc-display{font-size:18px}
+      .buttons{flex-direction:column}
+  .func-pad{width:100%}
+  .ops-grid{width:100%;flex-wrap:wrap}
+      .num-pad{grid-template-columns:repeat(3,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="gold-streaks" aria-hidden="true">
+      <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="goldGrad" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stop-color="#fff7e6" stop-opacity="1"/>
+            <stop offset="50%" stop-color="#ffd66b" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#d4af37" stop-opacity="1"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#goldGrad)" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M-200 50 C200 80 400 20 800 60" stroke-width="8" opacity="0.9" stroke-dasharray="540" />
+          <path d="M-150 120 C250 150 500 80 950 130" stroke-width="6" opacity="0.75" stroke-dasharray="420" />
+          <path d="M-100 200 C300 230 600 180 1100 220" stroke-width="4" opacity="0.6" stroke-dasharray="320" />
+        </g>
+      </svg>
+    </div>
+    <div class="card">
+  <button class="back" onclick="(history.length>1?history.back():location.href='/')">← Back</button>
+      <div class="header">
+        <div class="brand-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#fbe9e9"/><path d="M8 12l2.2 2.6L16 9" stroke="#b32020" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>Math Tools <span class="accent">Pro</span></h1>
+      </div>
+
+      <div class="row">
+        <div class="col panel math-section">
+          <div class="small">College Calculator</div>
+          <div class="calc-area">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div id="display" class="calc-display">0</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <button class="tool" id="del" title="Delete last">Del</button>
+                <button class="tool" id="clear" title="Clear">C</button>
+              </div>
+            </div>
+
+          <!-- memory + mode + history -->
+            <div class="controls">
+              <div style="display:flex;gap:6px">
+                <button class="tool" id="mc">MC</button>
+                <button class="tool" id="mr">MR</button>
+                <button class="tool" id="mplus">M+</button>
+                <button class="tool" id="mminus">M-</button>
+              </div>
+              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <label class="small" style="margin:0">Mode</label>
+                <button class="tool" id="modeToggle">DEG</button>
+              </div>
+            </div>
+
+            <div class="buttons" id="buttons">
+              <div class="num-pad" aria-hidden="false">
+                <button class="tool" data-val="7">7</button>
+                <button class="tool" data-val="8">8</button>
+                <button class="tool" data-val="9">9</button>
+                <button class="tool" data-val="4">4</button>
+                <button class="tool" data-val="5">5</button>
+                <button class="tool" data-val="6">6</button>
+                <button class="tool" data-val="1">1</button>
+                <button class="tool" data-val="2">2</button>
+                <button class="tool" data-val="3">3</button>
+                <button class="tool" data-val="0">0</button>
+                <button class="tool" data-val=".">.</button>
+                <button class="tool" data-val="pi">π</button>
+              </div>
+
+              <div class="func-pad">
+                <div class="fns-grid">
+                  <button class="tool" data-val="(">(</button>
+                  <button class="tool" data-val=")">)</button>
+                  <button class="tool" data-val="^">^</button>
+                  <button class="tool" data-val="%">%</button>
+
+                  <button class="tool" data-val="sin(">sin</button>
+                  <button class="tool" data-val="cos(">cos</button>
+                  <button class="tool" data-val="tan(">tan</button>
+                  <button class="tool" data-val="ln(">ln</button>
+
+                  <button class="tool" data-val="sqrt(">√</button>
+                  <button class="tool" data-val="^2">x²</button>
+                  <button class="tool" data-val="exp(">eˣ</button>
+                  <button class="tool" data-val="pi">π</button>
+                </div>
+
+                <div class="ops-grid">
+                  <button class="tool" data-val="/">÷</button>
+                  <button class="tool" data-val="*">×</button>
+                  <button class="tool" data-val="-">−</button>
+                  <button class="tool" data-val="+">+</button>
+                  <button class="tool" id="eq">=</button>
+                </div>
+              </div>
+            </div>
+
+          <!-- history moved to utilities column on the right -->
+        </div>
+
+        <aside class="col" style="max-width:360px;display:flex;flex-direction:column;gap:12px">
+          <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><div class="small">History</div><div class="small">Recent</div></div>
+            <div id="history" style="max-height:220px;overflow:auto;padding:8px;background:transparent;border-radius:8px"></div>
+          </div>
+
+          <div class="panel">
+            <div class="small">Scientific quick</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="tool" id="sin">sin</button>
+              <button class="tool" id="cos">cos</button>
+              <button class="tool" id="tan">tan</button>
+              <button class="tool" id="ln">ln</button>
+            </div>
+            <div style="margin-top:8px">
+              <label>Enter number</label>
+              <input id="sciInput" type="number" step="any" value="0">
+              <div style="margin-top:8px"><button class="tool" id="computeSci">Compute</button></div>
+              <div id="sciResult" class="small" style="margin-top:8px"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="small">Quadratic solver</div>
+            <label>a</label><input id="qa" type="number" step="any" value="1">
+            <label>b</label><input id="qb" type="number" step="any" value="0">
+            <label>c</label><input id="qc" type="number" step="any" value="0">
+            <div style="margin-top:8px"><button class="tool" id="solveQuad">Solve</button></div>
+            <div id="quadResult" class="small" style="margin-top:8px"></div>
+          </div>
+
+          <div class="panel">
+            <div class="small">Unit converter (length)</div>
+            <label>Value</label><input id="convVal" type="number" step="any" value="1">
+            <label>From</label>
+            <select id="convFrom"><option value="m">meters</option><option value="km">kilometers</option><option value="ft">feet</option><option value="mi">miles</option></select>
+            <label>To</label>
+            <select id="convTo"><option value="m">meters</option><option value="km">kilometers</option><option value="ft">feet</option><option value="mi">miles</option></select>
+            <div style="margin-top:8px"><button class="tool" id="convert">Convert</button></div>
+            <div id="convResult" class="small" style="margin-top:8px"></div>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // College calculator logic: safer evaluator, memory, history, DEG/RAD, keyboard support
+    const display = document.getElementById('display');
+    const buttons = document.getElementById('buttons');
+    const historyEl = document.getElementById('history');
+    let expr = '';
+    let memory = 0;
+    let mode = 'DEG'; // or 'RAD'
+    const pushHistory = (input, result)=>{
+      const row = document.createElement('div');
+      row.textContent = input + ' = ' + result;
+      historyEl.prepend(row);
+      while(historyEl.children.length>50) historyEl.removeChild(historyEl.lastChild);
+    }
+
+    // safe evaluator: map allowed names to Math functions
+    const safeMath = {
+      PI: Math.PI, E: Math.E,
+      sin: (x)=> mode==='DEG' ? Math.sin(x*Math.PI/180) : Math.sin(x),
+      cos: (x)=> mode==='DEG' ? Math.cos(x*Math.PI/180) : Math.cos(x),
+      tan: (x)=> mode==='DEG' ? Math.tan(x*Math.PI/180) : Math.tan(x),
+      ln: Math.log, log10: (x)=>Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10,
+      sqrt: Math.sqrt, exp: Math.exp, abs: Math.abs, pow: Math.pow,
+    };
+
+    function evaluateExpression(input){
+      // sanitize and replace common tokens: ^ -> pow, pi/e
+      try{
+        let s = input.replace(/π|pi/g,'PI').replace(/\be\b/g,'E');
+        // replace ^ with pow(a,b)
+        s = s.replace(/(\d+(?:\.\d+)?|PI|E|\([^\)]+\))\s*\^\s*(\d+(?:\.\d+)?|PI|E|\([^\)]+\))/g, 'pow($1,$2)');
+        // allow function names from safeMath
+        const names = Object.keys(safeMath).join('|');
+        const fn = new Function(...Object.keys(safeMath), 'with(Math){ return ('+s+'); }');
+        const result = fn(...Object.values(safeMath));
+        return result;
+      }catch(err){
+        return NaN;
+      }
+    }
+
+    buttons.addEventListener('click',(e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      const v = b.dataset.val;
+      if (v){ expr += v; display.innerText = expr; return; }
+      if (b.id === 'eq'){
+        const out = evaluateExpression(expr || display.innerText);
+        if (isNaN(out)) { display.innerText = 'Error'; } else { display.innerText = out; pushHistory(expr || display.innerText, out); expr = String(out); }
+      }
+    });
+
+    // delete / clear
+    document.getElementById('del').addEventListener('click', ()=>{ if(!expr) return; expr = expr.slice(0,-1); display.innerText = expr || '0'; });
+    document.getElementById('clear').addEventListener('click', ()=>{ expr=''; display.innerText='0'; });
+
+    // memory buttons
+    document.getElementById('mc').addEventListener('click', ()=>{ memory = 0; });
+    document.getElementById('mr').addEventListener('click', ()=>{ expr += String(memory); display.innerText = expr; });
+    document.getElementById('mplus').addEventListener('click', ()=>{ const v = parseFloat(display.innerText)||0; memory += v; });
+    document.getElementById('mminus').addEventListener('click', ()=>{ const v = parseFloat(display.innerText)||0; memory -= v; });
+
+    // mode toggle DEG/RAD
+    document.getElementById('modeToggle').addEventListener('click', ()=>{ mode = (mode==='DEG'?'RAD':'DEG'); document.getElementById('modeToggle').innerText = mode; });
+
+    // keyboard support: numbers, ops, enter, backspace
+    window.addEventListener('keydown',(ev)=>{
+      const k = ev.key;
+      if (k.match(/^[0-9\.\+\-\*\/\(\)\^%]$/)) { expr += k; display.innerText = expr; ev.preventDefault(); }
+      if (k.toLowerCase() === 'p'){ expr += 'pi'; display.innerText = expr; ev.preventDefault(); }
+      if (k.toLowerCase() === 'e'){ expr += 'e'; display.innerText = expr; ev.preventDefault(); }
+      if (k === 'Enter'){ ev.preventDefault(); const out = evaluateExpression(expr || display.innerText); if(isNaN(out)){display.innerText='Error'}else{display.innerText=out; pushHistory(expr||display.innerText,out); expr=String(out);} }
+      if (k === 'Backspace'){ ev.preventDefault(); expr = expr.slice(0,-1); display.innerText = expr||'0'; }
+    });
+
+  </script>
+</body>
+</html>
